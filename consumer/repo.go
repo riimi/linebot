@@ -1,10 +1,12 @@
-package consumer
+package main
 
 import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"errors"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 )
 
@@ -103,41 +105,15 @@ func (repo *RssItemRepoFirestore) Add(item RssItem) error {
 	return err
 }
 
-type SubscriptionRepoFirestore struct {
-	Client *firestore.Client
-}
-
-func (repo *SubscriptionRepoFirestore) Get(sname string) (Subscription, error) {
-	var sub Subscription
-	if repo.Client == nil {
-		return sub, ErrClientNil
+func (repo *RssItemRepoFirestore) IsNewItem(item RssItem) bool {
+	_, err := repo.Get(item.Link)
+	if err == nil {
+		return false
 	}
 
-	ctx := context.Background()
-	snap, err := repo.Client.Collection("Subscription").Doc(String2sha256(sname)).Get(ctx)
-	if err != nil {
-		return sub, err
+	stat, ok := status.FromError(err)
+	if !ok || stat.Code() != codes.NotFound {
+		return false
 	}
-	if err := snap.DataTo(&sub); err != nil {
-		return sub, err
-	}
-	return sub, nil
-}
-
-func (repo *SubscriptionRepoFirestore) Add(subs Subscription) error {
-	if repo.Client == nil {
-		return ErrClientNil
-	}
-	//subs.ID = String2sha256(subs.ServiceName)
-	subs.ID = subs.ServiceName
-	subs.UpdatedAt = time.Now()
-
-	ctx := context.Background()
-	_, err := repo.Client.Collection("RssService").Doc(subs.ServiceName).Get(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = repo.Client.Collection("RssItem").Doc(subs.ID).Set(ctx, subs)
-	return err
+	return true
 }

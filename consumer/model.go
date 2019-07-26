@@ -1,8 +1,9 @@
-package consumer
+package main
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"time"
 )
 
@@ -17,6 +18,24 @@ type RssService struct {
 	NumFollwer  int       `firestore:"num_follower,omitempty"`
 	CreatedAt   time.Time `firestore:"created_at,omitempty"`
 	UpdatedAt   time.Time `firestore:"updated_at,omitempty"`
+	UserID      []string  `firestore:"user_id"`
+}
+
+func (serv *RssService) AddSubscriber(uid string) {
+	serv.UserID = append(serv.UserID, uid)
+}
+
+func (serv *RssService) RemoveSubscriber(uid string) {
+	deleted := -1
+	for index, id := range serv.UserID {
+		if id == uid {
+			deleted = index
+			break
+		}
+	}
+	if deleted >= 0 {
+		serv.UserID = append(serv.UserID[:deleted], serv.UserID[deleted+1:]...)
+	}
 }
 
 type RssItem struct {
@@ -28,29 +47,8 @@ type RssItem struct {
 	CreatedAt   time.Time `json:"-" firestore:"created_at"`
 }
 
-type Subscription struct {
-	ID          string    `firestore:"id"`
-	UserId      []string  `firestore:"user_id"`
-	ServiceName string    `firestore:"service_name"`
-	CreatedAt   time.Time `firestore:"created_at"`
-	UpdatedAt   time.Time `firestore:"updated_at"`
-}
-
-func (sub *Subscription) AddSubscriber(uid string) {
-	sub.UserId = append(sub.UserId, uid)
-}
-
-func (sub *Subscription) RemoveSubscriber(uid string) {
-	deleted := -1
-	for index, id := range sub.UserId {
-		if id == uid {
-			deleted = index
-			break
-		}
-	}
-	if deleted >= 0 {
-		sub.UserId = append(sub.UserId[:deleted], sub.UserId[deleted+1:]...)
-	}
+func (item *RssItem) TextMessage() string {
+	return fmt.Sprintf("%s\n%s\n%s\n%s", item.ServiceName, item.Title, item.Published, item.Link)
 }
 
 func String2sha256(in string) string {

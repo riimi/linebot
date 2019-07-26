@@ -1,4 +1,4 @@
-package consumer
+package main
 
 import (
 	"github.com/mmcdole/gofeed"
@@ -48,7 +48,7 @@ func AddRssService(repo *RssServiceRepoFirestore, name, url string) error {
 	return nil
 }
 
-func SubscribeService(repo *SubscriptionRepoFirestore, sname, uid string) error {
+func SubscribeRssService(repo *RssServiceRepoFirestore, sname, uid string) error {
 	if repo == nil {
 		return ErrClientNil
 	}
@@ -65,7 +65,7 @@ func SubscribeService(repo *SubscriptionRepoFirestore, sname, uid string) error 
 	return nil
 }
 
-func UnsubscribeService(repo *SubscriptionRepoFirestore, sname, uid string) error {
+func UnsubscribeRssService(repo *RssServiceRepoFirestore, sname, uid string) error {
 	if repo == nil {
 		return ErrClientNil
 	}
