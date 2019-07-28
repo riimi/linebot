@@ -113,7 +113,7 @@ func BubbleContainerRssService(service RssService, nowsub bool) *linebot.BubbleC
 					Type: linebot.FlexComponentTypeButton,
 					Action: &linebot.URIAction{
 						Label: "Website",
-						URI:   service.Link,
+						URI:   service.Url,
 					},
 					Height: linebot.FlexButtonHeightTypeSm,
 					Style:  linebot.FlexButtonStyleTypeSecondary,

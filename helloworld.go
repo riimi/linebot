@@ -76,6 +76,7 @@ func HandleTextMessage(bot *linebot.Client, e *linebot.Event) error {
 
 	Ctx.LineEvent = e
 	msg := e.Message.(*linebot.TextMessage)
+	log.Print(msg.Text)
 	args := strings.Fields(msg.Text)
 	if _, _, err := rootCmd.Find(args); err != nil {
 		return err
