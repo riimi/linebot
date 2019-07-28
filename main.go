@@ -1,4 +1,4 @@
-package main
+package p
 
 import (
 	"cloud.google.com/go/firestore"
@@ -8,6 +8,20 @@ import (
 )
 
 func main() {
+	//scan := bufio.NewScanner(os.Stdin)
+	//for scan.Scan() {
+	//	text := scan.Text()
+	//	args := strings.Fields(text)
+	//	if _, _, err := rootCmd.Find(args); err != nil {
+	//		log.Fatal(err)
+	//	}
+	//
+	//	rootCmd.SetArgs(args)
+	//	if err := rootCmd.Execute(); err != nil {
+	//		log.Fatal(err)
+	//	}
+	//}
+
 	//repoRssService := &consumer.RssServiceRepoFirestore{Client: client}
 	//repoRssItem := &consumer.RssItemRepoFirestore{Client: client}
 

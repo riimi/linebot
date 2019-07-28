@@ -1,4 +1,4 @@
-package main
+package p
 
 import (
 	"crypto/sha256"
@@ -54,4 +54,11 @@ func (item *RssItem) TextMessage() string {
 func String2sha256(in string) string {
 	sha := sha256.Sum256([]byte(in))
 	return hex.EncodeToString(sha[:])
+}
+
+type Subscription struct {
+	ID          string    `firestore:"id"`
+	ServiceName string    `firestore:"service_name"`
+	UserID      string    `firestore:"user_id"`
+	CreateAt    time.Time `firestore:"created_at"`
 }

@@ -1,5 +1,5 @@
 // Package p contains a Pub/Sub Cloud Function.
-package main
+package p
 
 import (
 	"cloud.google.com/go/firestore"
@@ -40,6 +40,7 @@ func HelloPubSub(ctx context.Context, m PubSubMessage) error {
 
 func HandleService(client *firestore.Client) func(service RssService) error {
 	repoRssItem := &RssItemRepoFirestore{Client: client}
+	repoSub := &SubscriptionRepoFirestore{Client: client}
 
 	channelSecret := os.Getenv("CHANNEL_SECRET")
 	channelToken := os.Getenv("CHANNEL_TOKEN")
@@ -76,11 +77,14 @@ func HandleService(client *firestore.Client) func(service RssService) error {
 			nItem += 1
 			log.Printf("[new item %d] %v", nItem, newItem)
 
-			for _, id := range service.UserID {
-				log.Print(id)
-				if _, err := bot.PushMessage(id, linebot.NewTextMessage(newItem.TextMessage())).Do(); err != nil {
+			if err := repoSub.ForSubscriber(service.Name, func(sub Subscription) error {
+				//log.Print(sub.UserID)
+				if _, err := bot.PushMessage(sub.UserID, linebot.NewTextMessage(newItem.TextMessage())).Do(); err != nil {
 					return err
 				}
+				return nil
+			}); err != nil {
+				return err
 			}
 		}
 

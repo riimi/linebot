@@ -1,4 +1,4 @@
-package main
+package p
 
 import (
 	"cloud.google.com/go/firestore"
@@ -43,6 +43,18 @@ func (repo *RssServiceRepoFirestore) Add(service RssService) error {
 
 	ctx := context.Background()
 	_, err := repo.Client.Collection("RssService").Doc(service.ID).Set(ctx, service)
+	return err
+}
+
+func (repo *RssServiceRepoFirestore) Del(service RssService) error {
+	if repo.Client == nil {
+		return ErrClientNil
+	}
+	//service.ID = String2sha256(service.Url)
+	service.ID = service.Name
+
+	ctx := context.Background()
+	_, err := repo.Client.Collection("RssService").Doc(service.ID).Delete(ctx)
 	return err
 }
 
@@ -116,4 +128,67 @@ func (repo *RssItemRepoFirestore) IsNewItem(item RssItem) bool {
 		return false
 	}
 	return true
+}
+
+type SubscriptionRepoFirestore struct {
+	Client *firestore.Client
+}
+
+func (repo *SubscriptionRepoFirestore) Add(sub Subscription) error {
+	if repo.Client == nil {
+		return ErrClientNil
+	}
+
+	sub.ID = sub.ServiceName + `.` + sub.UserID
+
+	ctx := context.Background()
+	_, err := repo.Client.Collection("Subscription").Doc(sub.ID).Set(ctx, sub)
+	return err
+}
+
+func (repo *SubscriptionRepoFirestore) Del(sub Subscription) error {
+	if repo.Client == nil {
+		return ErrClientNil
+	}
+
+	sub.ID = sub.ServiceName + `.` + sub.UserID
+
+	ctx := context.Background()
+	_, err := repo.Client.Collection("Subscription").Doc(sub.ID).Delete(ctx)
+	return err
+}
+
+func (repo *SubscriptionRepoFirestore) Foreach(attr, op, value string, handle func(sub Subscription) error) error {
+	if repo.Client == nil {
+		return ErrClientNil
+	}
+
+	ctx := context.Background()
+	iter := repo.Client.Collection("Subscription").Where(attr, op, value).Documents(ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		var sub Subscription
+		if err := doc.DataTo(&sub); err != nil {
+			return err
+		}
+		if err := handle(sub); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (repo *SubscriptionRepoFirestore) ForSubscriber(sname string, handle func(sub Subscription) error) error {
+	return repo.Foreach("service_name", "==", sname, handle)
+}
+
+func (repo *SubscriptionRepoFirestore) AllSubsByUser(uid string, handle func(sub Subscription) error) error {
+	return repo.Foreach("user_id", "==", uid, handle)
 }
