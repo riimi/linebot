@@ -146,10 +146,9 @@ func FlexContainerRssServices(ctx *Context, uid string) (linebot.FlexContainer, 
 	services := make([]RssService, 0)
 	subsMap := make(map[string]bool)
 	repoRssService := &RssServiceRepoFirestore{Client: ctx.Firestore}
-	if err := repoRssService.Foreach(func(serv RssService) error {
+	if err := repoRssService.Foreach(func(serv RssService) {
 		services = append(services, serv)
 		subsMap[serv.Name] = false
-		return nil
 	}); err != nil {
 		return nil, err
 	}

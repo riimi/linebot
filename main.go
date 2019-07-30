@@ -1,10 +1,8 @@
 package p
 
 import (
-	"cloud.google.com/go/firestore"
-	"context"
 	"log"
-	"os"
+	"time"
 )
 
 func main() {
@@ -37,25 +35,33 @@ func main() {
 	//	}
 	//}
 
-	ctx := context.Background()
-	projectID := os.Getenv("PROJECT_ID")
-	client, err := firestore.NewClient(ctx, projectID)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-	defer client.Close()
-	//
-	repoRssService := &RssServiceRepoFirestore{Client: client}
-	//service, err := repoRssService.Get(`horriblesubs-1080p`)
+	//ctx := context.Background()
+	//projectID := os.Getenv("PROJECT_ID")
+	//client, err := firestore.NewClient(ctx, projectID)
 	//if err != nil {
-	//	log.Fatal(err)
+	//	log.Fatalf("%v", err)
 	//}
-	//service.AddSubscriber(`U80c288156ed296cfa61e8325df0e271c`)
-	//if err := repoRssService.Add(service); err != nil {
-	//	log.Fatal(err)
+	//defer client.Close()
+	////
+	//repoRssService := &RssServiceRepoFirestore{Client: client}
+	////service, err := repoRssService.Get(`horriblesubs-1080p`)
+	////if err != nil {
+	////	log.Fatal(err)
+	////}
+	////service.AddSubscriber(`U80c288156ed296cfa61e8325df0e271c`)
+	////if err := repoRssService.Add(service); err != nil {
+	////	log.Fatal(err)
+	////}
+	//
+	//if err := repoRssService.Foreach(HandleService(client)); err != nil {
+	//	log.Fatalf("%v", err)
 	//}
 
-	if err := repoRssService.Foreach(HandleService(client)); err != nil {
-		log.Fatalf("%v", err)
+	repo := &RssItemRepoFirestore{Client: Ctx.Firestore}
+	if err := repo.For("created_at", ">", time.Now().Add(time.Duration(-1)*time.Hour), func(item RssItem) error {
+		log.Printf("%v\n", item)
+		return nil
+	}); err != nil {
+		log.Fatal(err)
 	}
 }

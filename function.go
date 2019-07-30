@@ -38,7 +38,7 @@ func HelloPubSub(ctx context.Context, m PubSubMessage) error {
 	return nil
 }
 
-func HandleService(client *firestore.Client) func(service RssService) error {
+func HandleService(client *firestore.Client) func(service RssService) {
 	repoRssItem := &RssItemRepoFirestore{Client: client}
 	repoSub := &SubscriptionRepoFirestore{Client: client}
 
@@ -50,11 +50,11 @@ func HandleService(client *firestore.Client) func(service RssService) error {
 		log.Fatal(err)
 	}
 
-	return func(service RssService) error {
+	return func(service RssService) {
 		nItem := 0
 		feed, err := GetRssFeed(service.Url)
 		if err != nil {
-			return err
+			return
 		}
 
 		for _, item := range feed.Items {
@@ -68,11 +68,11 @@ func HandleService(client *firestore.Client) func(service RssService) error {
 
 			if !repoRssItem.IsNewItem(newItem) || nItem >= MAXITEM {
 				log.Printf("%s got %d new items", service.Name, nItem)
-				return nil
+				return
 			}
 
 			if err := repoRssItem.Add(newItem); err != nil {
-				return err
+				return
 			}
 			nItem += 1
 			log.Printf("[new item %d] %v", nItem, newItem)
@@ -84,10 +84,10 @@ func HandleService(client *firestore.Client) func(service RssService) error {
 				}
 				return nil
 			}); err != nil {
-				return err
+				return
 			}
 		}
 
-		return nil
+		return
 	}
 }

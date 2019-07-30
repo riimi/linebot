@@ -7,6 +7,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"sync"
 	"time"
 )
 
@@ -58,11 +59,12 @@ func (repo *RssServiceRepoFirestore) Del(service RssService) error {
 	return err
 }
 
-func (repo *RssServiceRepoFirestore) Foreach(handle func(service RssService) error) error {
+func (repo *RssServiceRepoFirestore) Foreach(handle func(service RssService)) error {
 	if repo.Client == nil {
 		return ErrClientNil
 	}
 
+	wg := sync.WaitGroup{}
 	ctx := context.Background()
 	iter := repo.Client.Collection("RssService").Documents(ctx)
 	for {
@@ -77,11 +79,14 @@ func (repo *RssServiceRepoFirestore) Foreach(handle func(service RssService) err
 		if err := doc.DataTo(&service); err != nil {
 			return err
 		}
-		if err := handle(service); err != nil {
-			return err
-		}
+		wg.Add(1)
+		go func() {
+			handle(service)
+			wg.Done()
+		}()
 	}
 
+	wg.Wait()
 	return nil
 }
 
@@ -130,6 +135,33 @@ func (repo *RssItemRepoFirestore) IsNewItem(item RssItem) bool {
 	return true
 }
 
+func (repo *RssItemRepoFirestore) For(attr, op string, value interface{}, handle func(item RssItem) error) error {
+	if repo.Client == nil {
+		return ErrClientNil
+	}
+
+	ctx := context.Background()
+	iter := repo.Client.Collection("RssItem").Where(attr, op, value).Documents(ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		var item RssItem
+		if err := doc.DataTo(&item); err != nil {
+			return err
+		}
+		if err := handle(item); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type SubscriptionRepoFirestore struct {
 	Client *firestore.Client
 }
@@ -163,6 +195,7 @@ func (repo *SubscriptionRepoFirestore) Foreach(attr, op, value string, handle fu
 		return ErrClientNil
 	}
 
+	wg := sync.WaitGroup{}
 	ctx := context.Background()
 	iter := repo.Client.Collection("Subscription").Where(attr, op, value).Documents(ctx)
 	for {
@@ -177,11 +210,17 @@ func (repo *SubscriptionRepoFirestore) Foreach(attr, op, value string, handle fu
 		if err := doc.DataTo(&sub); err != nil {
 			return err
 		}
-		if err := handle(sub); err != nil {
-			return err
-		}
+		//if err := handle(sub); err != nil {
+		//	return err
+		//}
+		wg.Add(1)
+		go func() {
+			handle(sub)
+			wg.Done()
+		}()
 	}
 
+	wg.Wait()
 	return nil
 }
 
