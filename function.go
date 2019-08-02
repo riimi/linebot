@@ -42,14 +42,6 @@ func HandleService(client *firestore.Client) func(service RssService) {
 	repoRssItem := &RssItemRepoFirestore{Client: client}
 	repoSub := &SubscriptionRepoFirestore{Client: client}
 
-	channelSecret := os.Getenv("CHANNEL_SECRET")
-	channelToken := os.Getenv("CHANNEL_TOKEN")
-
-	bot, err := linebot.New(channelSecret, channelToken)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return func(service RssService) {
 		nItem := 0
 		feed, err := GetRssFeed(service.Url)
@@ -79,7 +71,7 @@ func HandleService(client *firestore.Client) func(service RssService) {
 
 			if err := repoSub.ForSubscriber(service.Name, func(sub Subscription) error {
 				//log.Print(sub.UserID)
-				if _, err := bot.PushMessage(sub.UserID, linebot.NewTextMessage(newItem.TextMessage())).Do(); err != nil {
+				if _, err := Ctx.Linebot.PushMessage(sub.UserID, linebot.NewTextMessage(newItem.TextMessage())).Do(); err != nil {
 					return err
 				}
 				return nil

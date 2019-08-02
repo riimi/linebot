@@ -122,6 +122,18 @@ func (repo *RssItemRepoFirestore) Add(item RssItem) error {
 	return err
 }
 
+func (repo *RssItemRepoFirestore) Del(item RssItem) error {
+	if repo.Client == nil {
+		return ErrClientNil
+	}
+
+	item.ID = String2sha256(item.Link)
+
+	ctx := context.Background()
+	_, err := repo.Client.Collection("RssItem").Doc(item.ID).Delete(ctx)
+	return err
+}
+
 func (repo *RssItemRepoFirestore) IsNewItem(item RssItem) bool {
 	_, err := repo.Get(item.Link)
 	if err == nil {

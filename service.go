@@ -2,6 +2,7 @@ package p
 
 import (
 	"github.com/mmcdole/gofeed"
+	"log"
 	"os/exec"
 	"time"
 )
@@ -55,7 +56,25 @@ func DelRssService(ctx *Context, name string) error {
 	}
 
 	repoRssService := &RssServiceRepoFirestore{Client: ctx.Firestore}
-	return repoRssService.Del(RssService{Name: name})
+	if err := repoRssService.Del(RssService{Name: name}); err != nil {
+		return err
+	}
+	tobedel := make([]RssItem, 0)
+	repoRssItem := &RssItemRepoFirestore{Client: ctx.Firestore}
+	if err := repoRssItem.For("service_name", "==", name, func(item RssItem) error {
+		log.Print(item)
+		tobedel = append(tobedel, item)
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	for _, item := range tobedel {
+		if err := repoRssItem.Del(item); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func SubscribeRssService(ctx *Context, sname, uid string) error {
@@ -94,4 +113,24 @@ func UnsubscribeRssService(ctx *Context, sname, uid string) error {
 		ServiceName: sname,
 		UserID:      uid,
 	})
+}
+
+func CleanOldRssItem(ctx *Context) error {
+	tobedel := make([]RssItem, 0)
+	repo := &RssItemRepoFirestore{Client: ctx.Firestore}
+	if err := repo.For("created_at", ">", time.Now().Add(time.Duration(-7)*time.Hour), func(item RssItem) error {
+		log.Print(item)
+		tobedel = append(tobedel, item)
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	for _, item := range tobedel {
+		if err := repo.Del(item); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

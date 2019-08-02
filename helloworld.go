@@ -62,22 +62,25 @@ func HelloWorld(w http.ResponseWriter, r *http.Request) {
 		if event.Type == linebot.EventTypeMessage {
 			switch event.Message.(type) {
 			case *linebot.TextMessage:
-				if err := HandleTextMessage(Ctx.Linebot, event); err != nil {
+				if err := HandleTextMessage(Ctx.Linebot, event, event.Message.(*linebot.TextMessage).Text); err != nil {
 					log.Print(err)
 				}
+			}
+		} else if event.Type == linebot.EventTypePostback {
+			if err := HandleTextMessage(Ctx.Linebot, event, event.Postback.Data); err != nil {
+				log.Print(err)
 			}
 		}
 	}
 }
 
-func HandleTextMessage(bot *linebot.Client, e *linebot.Event) error {
+func HandleTextMessage(bot *linebot.Client, e *linebot.Event, msg string) error {
 	log.Printf("%#v\n", *e.Source)
 	Ctx.UserID = SourceID(e.Source)
 
 	Ctx.LineEvent = e
-	msg := e.Message.(*linebot.TextMessage)
-	log.Print(msg.Text)
-	args := strings.Fields(msg.Text)
+	log.Print(msg)
+	args := strings.Fields(msg)
 	if _, _, err := rootCmd.Find(args); err != nil {
 		return err
 	}

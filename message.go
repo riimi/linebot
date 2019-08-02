@@ -118,6 +118,16 @@ func BubbleContainerRssService(service RssService, nowsub bool) *linebot.BubbleC
 					Height: linebot.FlexButtonHeightTypeSm,
 					Style:  linebot.FlexButtonStyleTypeSecondary,
 				},
+				&linebot.ButtonComponent{
+					Type: linebot.FlexComponentTypeButton,
+					Action: &linebot.PostbackAction{
+						Label:       "Remove",
+						Data:        fmt.Sprintf(`!rss remove %s`, service.Name),
+						DisplayText: fmt.Sprintf(`!rss remove %s`, service.Name),
+					},
+					Height: linebot.FlexButtonHeightTypeSm,
+					Style:  linebot.FlexButtonStyleTypePrimary,
+				},
 				&linebot.SpacerComponent{
 					Type: linebot.FlexComponentTypeSpacer,
 					Size: linebot.FlexSpacerSizeTypeSm,
